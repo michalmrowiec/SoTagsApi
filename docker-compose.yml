@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  sotagsapi:
+    image: ${DOCKER_REGISTRY-}sotagsapi
+    build:
+      context: .
+      dockerfile: SoTagsApi/Dockerfile

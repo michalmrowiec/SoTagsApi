@@ -1,0 +1,6 @@
+@SoTagsApi_HostAddress = http://localhost:5052
+
+GET {{SoTagsApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
