@@ -12,3 +12,10 @@ services:
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+  db:
+    ports:
+      - "1433:1433"
+    volumes:
+      - db_data:/var/opt/mssql
+volumes:
+  db_data:

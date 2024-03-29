@@ -2,7 +2,7 @@
 {
     public class TagDto
     {
-        public TagDto(string name, long count, float percentageShare)
+        public TagDto(string name, long count, double percentageShare)
         {
             Name = name;
             Count = count;
@@ -11,6 +11,6 @@
 
         public string Name { get; set; } = default!;
         public long Count { get; set; }
-        public float PercentageShare { get; set; }
+        public double PercentageShare { get; set; }
     }
 }

@@ -2,5 +2,5 @@
 
 namespace SoTagsApi.Application.Tags.Commands.DownloadTags
 {
-    public record DownloadTagsCommand(int Count) : IRequest<bool>;
+    public record FetchTagsCommand(int Count) : IRequest<bool>;
 }

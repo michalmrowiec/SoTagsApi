@@ -2,7 +2,14 @@ version: '3.4'
 
 services:
   sotagsapi:
+    container_name: sotagsapi
     image: ${DOCKER_REGISTRY-}sotagsapi
     build:
       context: .
       dockerfile: SoTagsApi/Dockerfile
+  db:
+    container_name: sotagsdatabase
+    image: mcr.microsoft.com/mssql/server:2017-latest
+    environment:
+      SA_PASSWORD: "Strong@Passw0rd"
+      ACCEPT_EULA: "Y"

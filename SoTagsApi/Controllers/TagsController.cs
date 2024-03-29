@@ -15,10 +15,10 @@ namespace SoTagsApi.Controllers
             _mediator = mediator;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> DownloadTags()
+        [HttpPost("{count?}")]
+        public async Task<IActionResult> DownloadTags([FromRoute] int count = 1000)
         {
-            await _mediator.Send(new DownloadTagsCommand(20));
+            await _mediator.Send(new FetchTagsCommand(count));
 
             return Ok();
         }
