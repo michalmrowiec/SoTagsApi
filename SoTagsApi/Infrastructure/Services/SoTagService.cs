@@ -9,10 +9,12 @@ namespace SoTagsApi.Infrastructure.Services
     {
         private readonly ITagsRepository _tagsRepository;
         private readonly ILogger<SoTagService> _logger;
-        public SoTagService(ITagsRepository tagsRepository, ILogger<SoTagService> logger)
+        private readonly HttpClient _httpClient;
+        public SoTagService(ITagsRepository tagsRepository, ILogger<SoTagService> logger, HttpClient httpClient)
         {
             _tagsRepository = tagsRepository;
             _logger = logger;
+            _httpClient = httpClient;
         }
 
         public async Task<bool> FetchTagsAsync(int tagsToFetch = 1000)
@@ -32,7 +34,7 @@ namespace SoTagsApi.Infrastructure.Services
             var tags = CalcPercentageShare(
                 await FetchTagsFromApiAsync(tagsToFetch));
 
-            if(tags.Count <= 0)
+            if (tags.Count <= 0)
             {
                 _logger.LogError($"Fetched tags count: {tags.Count}");
                 return false;
@@ -49,9 +51,8 @@ namespace SoTagsApi.Infrastructure.Services
         {
             int pageNumber = 1;
             int pageSize = 100;
-            List<Tag> tags = new();
+            List<Tag> tags = [];
 
-            HttpClient client = new();
             UriBuilder uriBuilder = new("https://api.stackexchange.com/2.3/tags");
 
             try
@@ -61,16 +62,16 @@ namespace SoTagsApi.Infrastructure.Services
                     uriBuilder.Query = $"page={pageNumber}&pagesize={pageSize}&order=desc&sort=popular&site=stackoverflow";
                     _logger.LogInformation($"Sending request to {uriBuilder.Uri}");
 
-                    client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip");
+                    _httpClient.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip");
 
-                    var response = await client.GetAsync(uriBuilder.Uri);
+                    var response = await _httpClient.GetAsync(uriBuilder.Uri);
                     _logger.LogInformation($"Received response with status code {response.StatusCode}");
 
                     if (response.StatusCode != HttpStatusCode.OK)
                     {
                         _logger.LogError($"{response.StatusCode}|{response}|{response.Headers}|{response.Content}||PageNumber:{pageNumber}|PageSize:{pageSize}");
 
-                        return new List<Tag>();
+                        return [];
                     }
 
                     var content = new StreamReader(
@@ -94,11 +95,10 @@ namespace SoTagsApi.Infrastructure.Services
                     pageNumber++;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, ex.ToString());
             }
-
 
             return tags;
         }
