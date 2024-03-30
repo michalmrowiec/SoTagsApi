@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SoTagsApi.Infrastructure;
 
-namespace SoTagsApi.Tests.Infrastructure.Helper
+namespace SoTagsApi.Tests.UnitTests.Infrastructure.Helper
 {
     public class TestApplicationDbContextInMemoryFactory
     {

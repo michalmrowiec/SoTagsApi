@@ -12,18 +12,45 @@ var builder = WebApplication.CreateBuilder(args);
 
 var dbConnectionString = builder.Configuration.GetConnectionString("ContainerDb");
 
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.
-    Console(LogEventLevel.Information)
-    .WriteTo
-    .MSSqlServer(
+//Log.Logger = new LoggerConfiguration()
+//    .WriteTo.
+//    Console(LogEventLevel.Information)
+//    .WriteTo
+//    .MSSqlServer(
+//        restrictedToMinimumLevel: LogEventLevel.Warning,
+//        connectionString: dbConnectionString,
+//        sinkOptions: new MSSqlServerSinkOptions { TableName = "Logs", AutoCreateSqlTable = true })
+//    .CreateLogger();
+
+//builder.Services.AddLogging(loggingBuilder =>
+//        loggingBuilder.AddSerilog(
+//            logger: new LoggerConfiguration()
+//                .WriteTo.
+//                Console(LogEventLevel.Information)
+//                .WriteTo
+//                .MSSqlServer(
+//                    restrictedToMinimumLevel: LogEventLevel.Warning,
+//                    connectionString: dbConnectionString,
+//                    sinkOptions: new MSSqlServerSinkOptions { TableName = "Logs", AutoCreateSqlTable = true })
+//                .CreateLogger(),
+//            dispose: true));
+
+var loggerConfiguration = new LoggerConfiguration()
+    .WriteTo.Console(LogEventLevel.Information);
+
+if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Test")
+{
+    loggerConfiguration.WriteTo.MSSqlServer(
         restrictedToMinimumLevel: LogEventLevel.Warning,
         connectionString: dbConnectionString,
-        sinkOptions: new MSSqlServerSinkOptions { TableName = "Logs", AutoCreateSqlTable = true })
-    .CreateLogger();
+        sinkOptions: new MSSqlServerSinkOptions { TableName = "Logs", AutoCreateSqlTable = true });
+}
+
+Log.Logger = loggerConfiguration.CreateLogger();
 
 builder.Services.AddLogging(loggingBuilder =>
-        loggingBuilder.AddSerilog(dispose: true));
+        loggingBuilder.AddSerilog(logger: Log.Logger, dispose: true));
+
 
 builder.Services.AddHttpClient();
 
@@ -43,12 +70,15 @@ builder.Services.AddScoped<ISoTagService, SoTagService>();
 
 var app = builder.Build();
 
-using var scope = app.Services.CreateScope();
-var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-var pendingMigrations = dbContext.Database.GetPendingMigrations();
-if (pendingMigrations.Any())
+if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Test")
 {
-    dbContext.Database.Migrate();
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var pendingMigrations = dbContext.Database.GetPendingMigrations();
+    if (pendingMigrations.Any())
+    {
+        dbContext.Database.Migrate();
+    }
 }
 
 if (app.Environment.IsDevelopment())
@@ -64,3 +94,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

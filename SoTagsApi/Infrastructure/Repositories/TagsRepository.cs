@@ -27,7 +27,8 @@ namespace SoTagsApi.Infrastructure.Repositories
         public async Task DeleteAllAsync()
         {
             _logger.LogInformation("Deleting tags from db");
-            await _context.Tags.ExecuteDeleteAsync();
+            _context.Tags.RemoveRange(_context.Tags);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<PagedResult<Tag>> GetPaginedSortedTags(

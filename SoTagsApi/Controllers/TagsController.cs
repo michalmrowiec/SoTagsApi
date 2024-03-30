@@ -18,7 +18,7 @@ namespace SoTagsApi.Controllers
         }
 
         [HttpPost("{count?}")]
-        public async Task<IActionResult> DownloadTags(
+        public async Task<IActionResult> FetchTags(
             [FromRoute, Range(10, 2500, ErrorMessage = "Count must be between 1 and 2500")] int count = 1000)
         {
             var success = await _mediator.Send(new FetchTagsCommand(count));

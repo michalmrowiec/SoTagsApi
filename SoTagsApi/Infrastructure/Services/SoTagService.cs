@@ -40,10 +40,19 @@ namespace SoTagsApi.Infrastructure.Services
                 return false;
             }
 
-            await _tagsRepository.DeleteAllAsync();
-            _logger.LogInformation("Deleted tags from db");
-            await _tagsRepository.CreateRangeAsync(tags);
-            _logger.LogInformation("Saved new tags in db");
+            try
+            {
+                await _tagsRepository.DeleteAllAsync();
+                _logger.LogInformation("Deleted tags from db");
+                await _tagsRepository.CreateRangeAsync(tags);
+                _logger.LogInformation("Saved new tags in db");
+            }
+            catch (Exception ex)
+            {
+                await Console.Out.WriteLineAsync(ex.Message);
+                throw;
+            }
+
 
             return true;
         }

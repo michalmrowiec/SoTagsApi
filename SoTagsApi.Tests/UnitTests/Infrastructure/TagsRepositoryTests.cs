@@ -3,9 +3,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using SoTagsApi.Domain.Models;
 using SoTagsApi.Infrastructure.Repositories;
-using SoTagsApi.Tests.Infrastructure.Helper;
+using SoTagsApi.Tests.UnitTests.Infrastructure.Helper;
 
-namespace SoTagsApi.Tests.Infrastructure
+namespace SoTagsApi.Tests.UnitTests.Infrastructure
 {
     public class TagsRepositoryTests
     {
