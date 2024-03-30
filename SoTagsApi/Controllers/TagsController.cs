@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SoTagsApi.Application.Tags.Commands.DownloadTags;
+using SoTagsApi.Application.Tags.Queries.GetTags;
 
 namespace SoTagsApi.Controllers
 {
@@ -24,9 +25,16 @@ namespace SoTagsApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllTags()
+        public async Task<IActionResult> GetTags(
+            [FromQuery] int pageSize,
+            [FromQuery] int pageNumber,
+            [FromQuery] string? sortProperty,
+            [FromQuery] string? sortOrder)
         {
-            return Ok();
+            var response = await _mediator.Send(
+                new GetTagsQuery(pageSize, pageNumber, sortProperty, sortOrder));
+
+            return Ok(response);
         }
     }
 }

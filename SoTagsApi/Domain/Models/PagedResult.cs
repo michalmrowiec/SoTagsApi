@@ -8,7 +8,8 @@
         public int ItemsTo { get; set; }
         public int TotalPages { get; set; }
 
-
+        public PagedResult()
+        { }
         public PagedResult(IList<T> items, int totalItems, int pageSize, int pageNumber)
         {
             Items = items;

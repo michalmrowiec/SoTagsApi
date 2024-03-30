@@ -19,6 +19,7 @@ namespace SoTagsApi.Infrastructure.Services
         {
             if (tagsToFetch < 0 || tagsToFetch > 10_000)
             {
+                //log
                 return;
             }
 
