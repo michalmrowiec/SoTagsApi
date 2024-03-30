@@ -19,7 +19,7 @@ namespace SoTagsApi.Infrastructure.Services
         {
             if (tagsToFetch < 0 || tagsToFetch > 10_000)
             {
-                //log
+                _logger.LogWarning($"Tags to feth is invalid (less than 0 or grether than 10000) has value: {tagsToFetch}");
                 return;
             }
 
