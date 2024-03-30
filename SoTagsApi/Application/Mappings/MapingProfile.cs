@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using SoTagsApi.Application.Tags.Queries;
+using SoTagsApi.Application.Functions.Tags.Queries;
 using SoTagsApi.Domain.Models;
 
 namespace SoTagsApi.Application.Mappings

@@ -2,6 +2,6 @@
 {
     public interface ISoTagService
     {
-        Task FetchTagsAsync(int tagsToFetch = 1000);
+        Task<bool> FetchTagsAsync(int tagsToFetch = 1000);
     }
 }

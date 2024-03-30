@@ -1,4 +1,4 @@
-﻿namespace SoTagsApi.Application.Tags.Queries
+﻿namespace SoTagsApi.Application.Functions.Tags.Queries
 {
     public class TagDto
     {

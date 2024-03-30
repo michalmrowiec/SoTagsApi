@@ -15,12 +15,12 @@ namespace SoTagsApi.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task FetchTagsAsync(int tagsToFetch = 1000)
+        public async Task<bool> FetchTagsAsync(int tagsToFetch = 1000)
         {
-            if (tagsToFetch < 0 || tagsToFetch > 10_000)
+            if (tagsToFetch < 0 || tagsToFetch > 2500)
             {
-                _logger.LogWarning($"Tags to feth is invalid (less than 0 or grether than 10000) has value: {tagsToFetch}");
-                return;
+                _logger.LogWarning($"TagsToFeth is invalid (less than 0 or grether than 10000) has value: {tagsToFetch}");
+                return false;
             }
 
             var temp1 = tagsToFetch / 100;
@@ -28,19 +28,22 @@ namespace SoTagsApi.Infrastructure.Services
                 temp1++;
             tagsToFetch = temp1 * 100;
 
+            _logger.LogInformation($"Starting fetch {tagsToFetch} new tags");
             var tags = CalcPercentageShare(
                 await FetchTagsFromApiAsync(tagsToFetch));
 
-            foreach (var tag in tags)
+            if(tags.Count <= 0)
             {
-                await Console.Out.WriteLineAsync($"{tag.Name,-20} {tag.Count,-10} {tag.PercentageShare,-5}");
+                _logger.LogError($"Fetched tags count: {tags.Count}");
+                return false;
             }
-            await Console.Out.WriteLineAsync($"Sum: {tags.Sum(t => t.PercentageShare)} Count: {tags.Count}");
 
             await _tagsRepository.DeleteAllAsync();
+            _logger.LogInformation("Deleted tags from db");
             await _tagsRepository.CreateRangeAsync(tags);
+            _logger.LogInformation("Saved new tags in db");
 
-            return;
+            return true;
         }
         private async Task<IList<Tag>> FetchTagsFromApiAsync(int tagsToFetch = 1000)
         {
@@ -51,41 +54,58 @@ namespace SoTagsApi.Infrastructure.Services
             HttpClient client = new();
             UriBuilder uriBuilder = new("https://api.stackexchange.com/2.3/tags");
 
-            while (pageNumber * pageSize < tagsToFetch + 1)
+            try
             {
-                uriBuilder.Query = $"page={pageNumber}&pagesize={pageSize}&order=desc&sort=popular&site=stackoverflow";
-
-                client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip");
-
-                var response = await client.GetAsync(uriBuilder.Uri);
-
-                if (response.StatusCode != HttpStatusCode.OK)
+                while (pageNumber * pageSize < tagsToFetch + 1)
                 {
-                    return new List<Tag>();
+                    uriBuilder.Query = $"page={pageNumber}&pagesize={pageSize}&order=desc&sort=popular&site=stackoverflow";
+                    _logger.LogInformation($"Sending request to {uriBuilder.Uri}");
+
+                    client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip");
+
+                    var response = await client.GetAsync(uriBuilder.Uri);
+                    _logger.LogInformation($"Received response with status code {response.StatusCode}");
+
+                    if (response.StatusCode != HttpStatusCode.OK)
+                    {
+                        _logger.LogError($"{response.StatusCode}|{response}|{response.Headers}|{response.Content}||PageNumber:{pageNumber}|PageSize:{pageSize}");
+
+                        return new List<Tag>();
+                    }
+
+                    var content = new StreamReader(
+                        new GZipStream(await response.Content.ReadAsStreamAsync(),
+                        CompressionMode.Decompress))
+                        .ReadToEnd();
+
+                    _logger.LogInformation($"Response content: {content}");
+                    var model = JsonConvert.DeserializeObject<ResponseModel>(content);
+                    _logger.LogInformation($"Deserialized data: {model}");
+
+                    if (model?.Items == null)
+                    {
+                        _logger.LogWarning($"Response items is null: {model}");
+
+                        break;
+                    }
+
+                    tags.AddRange(model.Items);
+
+                    pageNumber++;
                 }
-
-                var content = new StreamReader(
-                    new GZipStream(await response.Content.ReadAsStreamAsync(),
-                    CompressionMode.Decompress))
-                    .ReadToEnd();
-
-                var model = JsonConvert.DeserializeObject<ResponseModel>(content);
-
-                if (model?.Items == null)
-                {
-                    break;
-                }
-
-                tags.AddRange(model.Items);
-
-                pageNumber++;
             }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, ex.ToString());
+            }
+
 
             return tags;
         }
 
-        private static IList<Tag> CalcPercentageShare(IList<Tag> tags)
+        private IList<Tag> CalcPercentageShare(IList<Tag> tags)
         {
+            _logger.LogInformation($"Start calc percentage share of {tags.Count} tags");
             var totalCount = tags.Sum(x => x.Count);
 
             foreach (var tag in tags)

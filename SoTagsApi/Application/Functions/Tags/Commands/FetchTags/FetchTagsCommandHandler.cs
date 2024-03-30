@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using SoTagsApi.Domain.Interfaces;
 
-namespace SoTagsApi.Application.Tags.Commands.DownloadTags
+namespace SoTagsApi.Application.Functions.Tags.Commands.FetchTags
 {
     public class FetchTagsCommandHandler : IRequestHandler<FetchTagsCommand, bool>
     {
@@ -16,11 +16,15 @@ namespace SoTagsApi.Application.Tags.Commands.DownloadTags
 
         public async Task<bool> Handle(FetchTagsCommand request, CancellationToken cancellationToken)
         {
-            await _soTagService.FetchTagsAsync(request.Count);
+            if (request.Count < 0 || request.Count > 2500)
+            {
+                _logger.LogWarning($"Tags to feth is invalid (less than 0 or grether than 10000) has value: {request.Count}");
+                return false;
+            }
 
-            Console.WriteLine("Downloaded");
+            var result = await _soTagService.FetchTagsAsync(request.Count);
 
-            return true;
+            return result;
         }
     }
 }

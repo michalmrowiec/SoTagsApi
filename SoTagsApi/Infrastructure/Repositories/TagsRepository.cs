@@ -17,6 +17,7 @@ namespace SoTagsApi.Infrastructure.Repositories
 
         public async Task<IList<Tag>> CreateRangeAsync(IList<Tag> tags)
         {
+            _logger.LogInformation($"Createing {tags.Count} new tags in db");
             await _context.Tags.AddRangeAsync(tags);
             await _context.SaveChangesAsync();
 
@@ -25,41 +26,59 @@ namespace SoTagsApi.Infrastructure.Repositories
 
         public async Task DeleteAllAsync()
         {
+            _logger.LogInformation("Deleting tags from db");
             await _context.Tags.ExecuteDeleteAsync();
         }
 
         public async Task<PagedResult<Tag>> GetPaginedSortedTags(
+            string sortProperty,
+            string sortOrder,
             int pageSize = 10,
-            int pageNumber = 1,
-            string sortProperty = "name",
-            string sortOrder = "desc")
+            int pageNumber = 1)
         {
-            IQueryable<Tag> tagsQuery = _context.Tags;
+            try
+            {
+                _logger.LogInformation($"Fetching paginated and sorted tags with pageSize: {pageSize}, pageNumber: {pageNumber}, sortProperty: {sortProperty}, sortOrder: {sortOrder}");
 
-            Expression<Func<Tag, object>> propSelector = sortProperty.ToLower() switch
+                IQueryable<Tag> tagsQuery = _context.Tags;
+
+                if (sortOrder == "desc")
+                {
+                    tagsQuery = tagsQuery.OrderByDescending(SelectProperty(sortProperty));
+                }
+                else
+                {
+                    tagsQuery = tagsQuery.OrderBy(SelectProperty(sortProperty));
+                }
+
+                var tags = await tagsQuery
+                    .Skip(pageSize * (pageNumber - 1))
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                _logger.LogInformation($"Fetched {tags.Count} tags from database");
+
+                var pagedResult = new PagedResult<Tag>(tags, tagsQuery.Count(), pageSize, pageNumber);
+
+                _logger.LogInformation($"Created paged result with {pagedResult.Items.Count} items");
+
+                return pagedResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error occurred while fetching paginated and sorted tags with pageSize: {pageSize}, pageNumber: {pageNumber}, sortProperty: {sortProperty}, sortOrder: {sortOrder}");
+            }
+            return new();
+        }
+
+        private static Expression<Func<Tag, object>> SelectProperty(string? sortProperty)
+        {
+            return sortProperty?.ToLower() switch
             {
                 "count" => tag => tag.Count,
-                "percentageshare" => tag => tag.PercentageShare,
-                _ => tag => tag.Name,
+                "name" => tag => tag.Name,
+                _ => tag => tag.PercentageShare,
             };
-
-            if (sortOrder == "desc")
-            {
-                tagsQuery = tagsQuery.OrderByDescending(propSelector);
-            }
-            else
-            {
-                tagsQuery = tagsQuery.OrderBy(propSelector);
-            }
-
-            var tags = await tagsQuery
-                .Skip(pageSize * (pageNumber - 1))
-                .Take(pageSize)
-                .ToListAsync();
-
-            var pagedResult = new PagedResult<Tag>(tags, tagsQuery.Count(), pageSize, pageNumber);
-
-            return pagedResult;
         }
     }
 }

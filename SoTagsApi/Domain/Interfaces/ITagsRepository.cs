@@ -7,9 +7,9 @@ namespace SoTagsApi.Domain.Interfaces
         Task<IList<Tag>> CreateRangeAsync(IList<Tag> tags);
         Task DeleteAllAsync();
         Task<PagedResult<Tag>> GetPaginedSortedTags(
+                            string sortProperty,
+                            string sortOrder,
                             int pageSize = 10,
-                            int pageNumber = 1,
-                            string sortProperty = "name",
-                            string sortOrder = "desc");
+                            int pageNumber = 1);
     }
 }
