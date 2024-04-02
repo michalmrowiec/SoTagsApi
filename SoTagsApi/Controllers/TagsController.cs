@@ -1,7 +1,9 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SoTagsApi.Application.Functions.Tags.Commands.FetchTags;
+using SoTagsApi.Application.Functions.Tags.Queries;
 using SoTagsApi.Application.Functions.Tags.Queries.GetTags;
+using SoTagsApi.Domain.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace SoTagsApi.Controllers
@@ -27,11 +29,11 @@ namespace SoTagsApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTags(
-            [FromQuery, Range(1, 100, ErrorMessage = "Page size must be between 1 and 100")] int pageSize,
-            [FromQuery, Range(1, int.MaxValue, ErrorMessage = "Page number must be greater than 0")] int pageNumber,
-            [FromQuery, RegularExpression("^(name|count|percentageshare)$", ErrorMessage = "Invalid sort property. Valid options are: name, count, percentageshare")] string? sortProperty,
-            [FromQuery, RegularExpression("^(asc|desc)$", ErrorMessage = "Invalid sort order. Valid options are: asc, desc")] string? sortOrder)
+        public async Task<ActionResult<PagedResult<TagDto>>> GetTags(
+            [FromQuery, Required, Range(1, 100, ErrorMessage = "Page size must be between 1 and 100")] int pageSize,
+            [FromQuery, Required, Range(1, 10_000, ErrorMessage = "Page number must be greater than 0")] int pageNumber,
+            [FromQuery, RegularExpression("^(name|count|percentageshare|)$", ErrorMessage = "Invalid sort property. Valid options are: name, count, percentageshare")] string? sortProperty,
+            [FromQuery, RegularExpression("^(asc|desc|)$", ErrorMessage = "Invalid sort order. Valid options are: asc, desc")] string? sortOrder)
         {
             sortProperty ??= "percentageshare";
             sortOrder ??= "desc";

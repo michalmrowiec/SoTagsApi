@@ -3,6 +3,7 @@ using MediatR;
 using SoTagsApi.Application.Functions.Tags.Commands.FetchTags;
 using SoTagsApi.Domain.Interfaces;
 using SoTagsApi.Domain.Models;
+using System.Text.RegularExpressions;
 
 namespace SoTagsApi.Application.Functions.Tags.Queries.GetTags
 {
@@ -24,6 +25,17 @@ namespace SoTagsApi.Application.Functions.Tags.Queries.GetTags
 
         public async Task<PagedResult<TagDto>> Handle(GetTagsQuery request, CancellationToken cancellationToken)
         {
+            if (!Regex.IsMatch(request.SortProperty, "^(name|count|percentageshare|)$")
+                || !Regex.IsMatch(request.SortOrder, "^(asc|desc|)$")
+                || request.PageSize <= 0
+                || request.PageSize > 100
+                || request.PageNumber <= 0
+                || request.PageSize > 10_000)
+            {
+                _logger.LogError($"Invalid parameters | sort property: {request.SortProperty} | sort order: {request.SortOrder} | page size: {request.PageSize} | page number: {request.PageNumber}");
+                return new();
+            }
+
             try
             {
                 _logger.LogInformation($"Handling GetTagsQuery: {request}");
@@ -31,8 +43,8 @@ namespace SoTagsApi.Application.Functions.Tags.Queries.GetTags
                 var pagedResult = await _tagsRepository.GetPaginedSortedTags(
                     request.SortProperty,
                     request.SortOrder,
-                    request.PageSize != 0 ? request.PageSize : 10,
-                    request.PageNumber != 0 ? request.PageNumber : 1);
+                    request.PageSize,
+                    request.PageNumber);
 
                 _logger.LogInformation($"Fetched {pagedResult.Items.Count} tags from repository");
 

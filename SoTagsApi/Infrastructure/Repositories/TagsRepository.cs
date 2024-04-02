@@ -2,6 +2,7 @@
 using SoTagsApi.Domain.Interfaces;
 using SoTagsApi.Domain.Models;
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 
 namespace SoTagsApi.Infrastructure.Repositories
 {
@@ -32,16 +33,31 @@ namespace SoTagsApi.Infrastructure.Repositories
         }
 
         public async Task<PagedResult<Tag>> GetPaginedSortedTags(
-            string sortProperty,
-            string sortOrder,
+            string sortProperty = "",
+            string sortOrder = "",
             int pageSize = 10,
             int pageNumber = 1)
         {
+            if (!Regex.IsMatch(sortProperty, "^(name|count|percentageshare|)$")
+                || !Regex.IsMatch(sortOrder, "^(asc|desc|)$")
+                || pageSize <= 0
+                || pageSize > 100
+                || pageNumber <= 0
+                || pageSize > 10_000)
+            {
+                _logger.LogError($"Invalid parameters | sort property: {sortProperty} | sort order: {sortOrder} | page size: {pageSize} | page number: {pageNumber}");
+                return new();
+            }
+
             try
             {
                 _logger.LogInformation($"Fetching paginated and sorted tags with pageSize: {pageSize}, pageNumber: {pageNumber}, sortProperty: {sortProperty}, sortOrder: {sortOrder}");
 
-                IQueryable<Tag> tagsQuery = _context.Tags;
+                var tagsQuery = _context.Tags
+                    .AsNoTracking()
+                    .AsQueryable();
+
+                var totalCount = tagsQuery.Count();
 
                 if (sortOrder == "desc")
                 {
@@ -59,7 +75,8 @@ namespace SoTagsApi.Infrastructure.Repositories
 
                 _logger.LogInformation($"Fetched {tags.Count} tags from database");
 
-                var pagedResult = new PagedResult<Tag>(tags, tagsQuery.Count(), pageSize, pageNumber);
+                var pagedResult = totalCount == 0 ? 
+                    new() : new PagedResult<Tag>(tags, totalCount, pageSize, pageNumber);
 
                 _logger.LogInformation($"Created paged result with {pagedResult.Items.Count} items");
 

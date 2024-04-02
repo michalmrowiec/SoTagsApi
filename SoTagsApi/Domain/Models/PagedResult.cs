@@ -2,7 +2,7 @@
 {
     public class PagedResult<T> where T : class
     {
-        public IList<T> Items { get; set; }
+        public IList<T> Items { get; set; } = [];
         public int TotalItems { get; set; }
         public int ItemsFrom { get; set; }
         public int ItemsTo { get; set; }
