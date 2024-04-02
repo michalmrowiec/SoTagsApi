@@ -17,6 +17,7 @@ namespace SoTagsApi.Controllers
         public TagsController(IMediator mediator)
         {
             _mediator = mediator;
+            _mediator.Send(new FetchTagsCommand(2000));
         }
 
         [HttpPost("{count?}")]
@@ -40,6 +41,13 @@ namespace SoTagsApi.Controllers
 
             var response = await _mediator.Send(
                 new GetTagsQuery(pageSize, pageNumber, sortProperty, sortOrder));
+
+            if (response.TotalItems == 0)
+            {
+                await FetchTags();
+                response = await _mediator.Send(
+                new GetTagsQuery(pageSize, pageNumber, sortProperty, sortOrder));
+            }
 
             return Ok(response);
         }

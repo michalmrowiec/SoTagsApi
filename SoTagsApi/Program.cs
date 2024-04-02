@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
+using SoTagsApi.Controllers;
 using SoTagsApi.Domain.Interfaces;
 using SoTagsApi.Infrastructure;
 using SoTagsApi.Infrastructure.Repositories;

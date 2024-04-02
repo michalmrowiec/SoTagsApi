@@ -3,7 +3,7 @@ using SoTagsApi.Infrastructure;
 
 namespace SoTagsApi.Tests.UnitTests.Infrastructure.Helper
 {
-    public class TestApplicationDbContextInMemoryFactory
+    public class TestApplicationDbContextInMemoryCreator
     {
         public static TestApplicationDbContext Create()
         {
